@@ -114,7 +114,7 @@ public class auto extends LinearOpMode {
                 case DRIVE_TO_TARGET_4:
                     if(nav.driveTo(odo.getPosition(),TARGET_4,0.5,0.5)){
                         telemetry.addLine("at position #4");
-                        stateMachine = StateMachine.AT_TARGET;
+                        stateMachine = StateMachine.WAITING_FOR_START;
                     }
                     break;
 
