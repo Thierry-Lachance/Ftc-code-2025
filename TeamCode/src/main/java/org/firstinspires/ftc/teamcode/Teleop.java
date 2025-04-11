@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -25,7 +26,7 @@ public class Teleop extends LinearOpMode {
     GoBildaPinpointDriver odo; // Declare OpMode member for the Odometry Computer
     DriveToPoint nav = new DriveToPoint(this); //OpMode member for the point-to-point navigation class
     private static final boolean USE_WEBCAM = true;
-
+    CRServo servoBucket;
     enum StateMachine {
         WAITING_FOR_TARGET,
         DRIVE_TO_TARGET_A,
@@ -55,8 +56,8 @@ public class Teleop extends LinearOpMode {
      */
     private VisionPortal visionPortal;
     private DcMotor slideMotor;
-    private static final int POSITION_1 = 500; // Preset position 1 (encoder counts)
-    private static final int POSITION_2 = 4300;
+    private static final int POSITION_1 = -75; // Preset position 1 (encoder counts)
+    private static final int POSITION_2 = -3200;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -66,8 +67,8 @@ public class Teleop extends LinearOpMode {
         DcMotor backLeftMotor = hardwareMap.dcMotor.get("bl");
         DcMotor frontRightMotor = hardwareMap.dcMotor.get("fr");
         DcMotor backRightMotor = hardwareMap.dcMotor.get("br");
-        slideMotor = hardwareMap.get(DcMotor.class, "slideMotor");
-
+        slideMotor = hardwareMap.get(DcMotor.class, "ele");
+        servoBucket = hardwareMap.get(CRServo.class, "servoBucket");
 
 
         initAprilTag();
@@ -79,6 +80,8 @@ public class Teleop extends LinearOpMode {
         frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         backRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        slideMotor.setTargetPosition(0);
+        slideMotor.setPower(0.0);
         slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // Retrieve the IMU from the hardware map
@@ -99,7 +102,7 @@ public class Teleop extends LinearOpMode {
 
         StateMachine stateMachine;
         stateMachine = StateMachine.WAITING_FOR_TARGET;
-
+        slideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         telemetry.addData("Status", "Initialized");
         telemetry.addData("X offset", odo.getXOffset());
         telemetry.addData("Y offset", odo.getYOffset());
@@ -173,13 +176,21 @@ public class Teleop extends LinearOpMode {
             } else {
                 stateMachine = StateMachine.WAITING_FOR_TARGET;
             }
-            if (gamepad1.a) {
+            if (gamepad2.a) {
                 slideMotor.setTargetPosition(POSITION_1);
                 slideMotor.setPower(1.0); // Set motor power
-            } else if (gamepad1.b) {
+            } else if (gamepad2.b) {
                 slideMotor.setTargetPosition(POSITION_2);
                 slideMotor.setPower(1.0);
             }
+            else{
+                slideMotor.setTargetPosition(POSITION_1);
+                slideMotor.setPower(0.0);
+            }
+            if (gamepad2.right_trigger > 0.5) servoBucket.setPower(-1);
+            else if (gamepad2.left_trigger > 0.5) servoBucket.setPower(1);
+            else servoBucket.setPower(0);
+
 
 
         }
