@@ -35,15 +35,15 @@ public class CorrectingTeleop extends LinearOpMode {
 
     }
 
-    static final Pose2D TARGET_A = new Pose2D(DistanceUnit.INCH, -54, -38, AngleUnit.DEGREES, 90);
+    static final Pose2D TARGET_A = new Pose2D(DistanceUnit.INCH, 40, 0, AngleUnit.DEGREES, 0);
     static final Pose2D TARGET_B = new Pose2D(DistanceUnit.INCH, 15, -15, AngleUnit.DEGREES, 0);
     static final Pose2D TARGET_X = new Pose2D(DistanceUnit.INCH, 15, 15, AngleUnit.DEGREES, 0);
     static final Pose2D TARGET_Y = new Pose2D(DistanceUnit.INCH, 15, 0, AngleUnit.DEGREES, 0);
 
     private final Position cameraPosition = new Position(DistanceUnit.INCH,
-            0, 0, 0, 0);
+            -4.5, -8.5, 5.5, 0);
     private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
-            0, -90, 0, 0);
+            90, -90, 0, 0);
 
     /**
      * The variable to store our instance of the AprilTag processor.
@@ -59,10 +59,10 @@ public class CorrectingTeleop extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         // Declare our motors
         // Make sure your ID's match your configuration
-        DcMotor frontLeftMotor = hardwareMap.dcMotor.get("flMotor");
-        DcMotor backLeftMotor = hardwareMap.dcMotor.get("blMotor");
-        DcMotor frontRightMotor = hardwareMap.dcMotor.get("frMotor");
-        DcMotor backRightMotor = hardwareMap.dcMotor.get("brMotor");
+        DcMotor frontLeftMotor = hardwareMap.dcMotor.get("fl");
+        DcMotor backLeftMotor = hardwareMap.dcMotor.get("bl");
+        DcMotor frontRightMotor = hardwareMap.dcMotor.get("fr");
+        DcMotor backRightMotor = hardwareMap.dcMotor.get("br");
 
         initAprilTag();
 
@@ -113,7 +113,7 @@ public class CorrectingTeleop extends LinearOpMode {
             odo.update();
             double y = -gamepad1.left_stick_y; // Remember, Y stick value is reversed
             double x = gamepad1.left_stick_x;
-            double rx = gamepad1.right_stick_x;
+            double rx = gamepad1.right_stick_x*0.7;
 
             if (gamepad1.options) {
                 imu.resetYaw();
@@ -147,7 +147,7 @@ public class CorrectingTeleop extends LinearOpMode {
                 List<AprilTagDetection> currentDetections = aprilTag.getDetections();
                 for (AprilTagDetection detection : currentDetections) {
                     if (detection.metadata != null) {
-                        odo.setPosition(new Pose2D(DistanceUnit.INCH, detection.robotPose.getPosition().y, detection.robotPose.getPosition().x, AngleUnit.DEGREES, detection.robotPose.getOrientation().getYaw(AngleUnit.DEGREES)));
+                        odo.setPosition(new Pose2D(DistanceUnit.INCH, detection.robotPose.getPosition().y, -detection.robotPose.getPosition().x, AngleUnit.DEGREES, detection.robotPose.getOrientation().getYaw(AngleUnit.DEGREES)));
                     }
                 }
             } else if (gamepad1.x) {
@@ -263,8 +263,8 @@ public class CorrectingTeleop extends LinearOpMode {
         }   // end for() loop
 
         // Add "key" information to telemetry
-        telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
-        telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
+        telemetry.addLine(String.format("x %6.1f", odo.getPosition().getX(DistanceUnit.INCH)));
+        telemetry.addLine(String.format("y %6.1f", odo.getPosition().getY(DistanceUnit.INCH)));
 
     }   // end method telemetryAprilTag()
 
