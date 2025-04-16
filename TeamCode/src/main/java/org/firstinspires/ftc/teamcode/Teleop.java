@@ -6,8 +6,9 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.IMU;
-
+import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -18,6 +19,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
 
 import java.util.List;
 
@@ -37,30 +39,20 @@ public class Teleop extends LinearOpMode {
         DRIVE_TO_TARGET_Y
 
     }
-
     static final Pose2D TARGET_A = new Pose2D(DistanceUnit.INCH, 40, 13, AngleUnit.DEGREES, -90);
     static final Pose2D TARGET_B = new Pose2D(DistanceUnit.INCH, 15, -15, AngleUnit.DEGREES, 0);
     static final Pose2D TARGET_X = new Pose2D(DistanceUnit.INCH, 15, 15, AngleUnit.DEGREES, 0);
     static final Pose2D TARGET_Y = new Pose2D(DistanceUnit.INCH, 15, 0, AngleUnit.DEGREES, 0);
-
     private final Position cameraPosition = new Position(DistanceUnit.INCH,
             4.5, 8, 7, 0);
     private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
             0, -90, 0, 0);
-
-    /**
-     * The variable to store our instance of the AprilTag processor.
-     */
     private AprilTagProcessor aprilTag;
-
-    /**
-     * The variable to store our instance of the vision portal.
-     */
     private VisionPortal visionPortal;
-    private DcMotor slideMotor;
     private static final int POSITION_1 = -75; // Preset position 1 (encoder counts)
     private static final int POSITION_2 = -3200;
-
+    private ElapsedTime runtime = new ElapsedTime();
+    double time = 0.0;
     @Override
     public void runOpMode() throws InterruptedException {
         // Declare our motors
@@ -70,10 +62,11 @@ public class Teleop extends LinearOpMode {
         DcMotor frontRightMotor = hardwareMap.dcMotor.get("fr");
         DcMotor backRightMotor = hardwareMap.dcMotor.get("br");
         DcMotor armMotor = hardwareMap.dcMotor.get("arm");
-        slideMotor = hardwareMap.get(DcMotor.class, "ele");
+        DcMotor slideMotor = hardwareMap.get(DcMotor.class, "ele");
         servoBucket = hardwareMap.get(CRServo.class, "servoBucket");
         servoPinceR = hardwareMap.get(CRServo.class, "servoPinceR");
         servoPinceL = hardwareMap.get(CRServo.class, "servoPinceL");
+        DigitalChannel armLimit = hardwareMap.digitalChannel.get("armLimit");
 
 
         initAprilTag();
@@ -88,6 +81,7 @@ public class Teleop extends LinearOpMode {
         slideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        armLimit.setMode(DigitalChannel.Mode.INPUT);
 
         // Retrieve the IMU from the hardware map
         IMU imu = hardwareMap.get(IMU.class, "imu");
@@ -202,9 +196,32 @@ public class Teleop extends LinearOpMode {
             if (gamepad2.right_bumper) servoBucket.setPower(-1);
             else if (gamepad2.left_bumper) servoBucket.setPower(1);
             else servoBucket.setPower(0);
-            servoPinceL.setPower(gamepad2.right_trigger-gamepad2.left_trigger);
-            servoPinceR.setPower(gamepad2.left_trigger-gamepad2.right_trigger);
+            if (gamepad2.right_trigger > 0.5) {
+                servoPinceR.setPower(-1);
+                servoPinceL.setPower(1);
+            } else if (gamepad2.left_trigger > 0.5) {
+                if (!armLimit.getState()) {
+                    servoPinceR.setPower(1);
+                    servoPinceL.setPower(-1);
+                    time = runtime.time();
+                }
+                else {
+                    servoPinceR.setPower(1);
+                    servoPinceL.setPower(-1);
+                }
+            } else if (time == 0.0) {
+                servoPinceR.setPower(0);
+                servoPinceL.setPower(0);
+            }
             armMotor.setPower(gamepad2.left_stick_y);
+            if (time != 0.0) {
+                if (time + 1.5 <= runtime.time()) {
+                    servoPinceR.setPower(0);
+                    servoPinceL.setPower(0);
+                    time = 0.0;
+                }
+
+            }
 
 
         }
