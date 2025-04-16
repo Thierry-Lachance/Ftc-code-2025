@@ -22,13 +22,12 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 
 @TeleOp
-public class Teleop extends LinearOpMode {
+public class Teleop_echelle extends LinearOpMode {
     GoBildaPinpointDriver odo; // Declare OpMode member for the Odometry Computer
     DriveToPoint nav = new DriveToPoint(this); //OpMode member for the point-to-point navigation class
     private static final boolean USE_WEBCAM = true;
     CRServo servoBucket;
-    CRServo servoPinceR;
-    CRServo servoPinceL;
+
     enum StateMachine {
         WAITING_FOR_TARGET,
         DRIVE_TO_TARGET_A,
@@ -69,11 +68,9 @@ public class Teleop extends LinearOpMode {
         DcMotor backLeftMotor = hardwareMap.dcMotor.get("bl");
         DcMotor frontRightMotor = hardwareMap.dcMotor.get("fr");
         DcMotor backRightMotor = hardwareMap.dcMotor.get("br");
-        DcMotor armMotor = hardwareMap.dcMotor.get("arm");
         slideMotor = hardwareMap.get(DcMotor.class, "ele");
         servoBucket = hardwareMap.get(CRServo.class, "servoBucket");
-        servoPinceR = hardwareMap.get(CRServo.class, "servoPinceR");
-        servoPinceL = hardwareMap.get(CRServo.class, "servoPinceL");
+
 
 
         initAprilTag();
@@ -85,9 +82,9 @@ public class Teleop extends LinearOpMode {
         frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         backRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        slideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        slideMotor.setTargetPosition(0);
+        slideMotor.setPower(0.0);
+        slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // Retrieve the IMU from the hardware map
         IMU imu = hardwareMap.get(IMU.class, "imu");
@@ -107,7 +104,7 @@ public class Teleop extends LinearOpMode {
 
         StateMachine stateMachine;
         stateMachine = StateMachine.WAITING_FOR_TARGET;
-        slideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        slideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         telemetry.addData("Status", "Initialized");
         telemetry.addData("X offset", odo.getXOffset());
         telemetry.addData("Y offset", odo.getYOffset());
@@ -182,29 +179,22 @@ public class Teleop extends LinearOpMode {
                 stateMachine = StateMachine.WAITING_FOR_TARGET;
             }
             if (gamepad2.a) {
-                slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 slideMotor.setTargetPosition(POSITION_1);
                 slideMotor.setPower(1.0); // Set motor power
             } else if (gamepad2.b) {
-                slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 slideMotor.setTargetPosition(POSITION_2);
                 slideMotor.setPower(1.0);
             }
             else{
-                slideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                slideMotor.setPower(gamepad2.right_stick_y);
-                if(gamepad2.options){
-                    slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                }
+                slideMotor.setTargetPosition(POSITION_1);
+                slideMotor.setPower(0.0);
             }
-            if (gamepad2.right_bumper) servoBucket.setPower(-1);
-            else if (gamepad2.left_bumper) servoBucket.setPower(1);
+            if (gamepad2.right_trigger > 0.5) servoBucket.setPower(-1);
+            else if (gamepad2.left_trigger > 0.5) servoBucket.setPower(1);
             else servoBucket.setPower(0);
-            servoPinceL.setPower(gamepad2.right_trigger-gamepad2.left_trigger);
-            servoPinceR.setPower(gamepad2.left_trigger-gamepad2.right_trigger);
-            armMotor.setPower(gamepad2.left_stick_y);
+
+
+
 
 
         }
