@@ -49,10 +49,11 @@ public class Teleop extends LinearOpMode {
             0, -90, 0, 0);
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
-    private static final int POSITION_1 = -75; // Preset position 1 (encoder counts)
-    private static final int POSITION_2 = -3200;
+    private static final int POSITION_1 = -950; // Preset position 1 (encoder counts)
+    private static final int POSITION_2 = -3000;
     private ElapsedTime runtime = new ElapsedTime();
     double time = 0.0;
+    double debouce = 0.0;
     @Override
     public void runOpMode() throws InterruptedException {
         // Declare our motors
@@ -101,7 +102,7 @@ public class Teleop extends LinearOpMode {
 
         StateMachine stateMachine;
         stateMachine = StateMachine.WAITING_FOR_TARGET;
-        slideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        slideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         telemetry.addData("Status", "Initialized");
         telemetry.addData("X offset", odo.getXOffset());
         telemetry.addData("Y offset", odo.getYOffset());
@@ -176,23 +177,31 @@ public class Teleop extends LinearOpMode {
                 stateMachine = StateMachine.WAITING_FOR_TARGET;
             }
             if (gamepad2.a) {
+                if(!slideMotor.isBusy()){
                 slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 slideMotor.setTargetPosition(POSITION_1);
-                slideMotor.setPower(1.0); // Set motor power
-            } else if (gamepad2.b) {
-                slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                slideMotor.setPower(1.0);}
+                debouce = runtime.time();
+            } else if (gamepad2.y) {
+                if(!slideMotor.isBusy()){
+                    slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
                 slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 slideMotor.setTargetPosition(POSITION_2);
-                slideMotor.setPower(1.0);
+                slideMotor.setPower(1.0);          }
+                debouce = runtime.time();
             }
-            else{
+            else if(gamepad2.x) {
                 slideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 slideMotor.setPower(gamepad2.right_stick_y);
                 if(gamepad2.options){
                     slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 }
             }
+            //else if(debouce + 0.1 <= runtime.time()) {
+            //    slideMotor.setPower(0);
+            //}
             if (gamepad2.right_bumper) servoBucket.setPower(-1);
             else if (gamepad2.left_bumper) servoBucket.setPower(1);
             else servoBucket.setPower(0);
@@ -213,7 +222,7 @@ public class Teleop extends LinearOpMode {
                 servoPinceR.setPower(0);
                 servoPinceL.setPower(0);
             }
-            armMotor.setPower(gamepad2.left_stick_y);
+            armMotor.setPower(-gamepad2.left_stick_y);
             if (time != 0.0) {
                 if (time + 1.5 <= runtime.time()) {
                     servoPinceR.setPower(0);
