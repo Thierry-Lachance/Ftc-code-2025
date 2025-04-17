@@ -22,11 +22,11 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 
 @TeleOp
-public class Teleop_echelle extends LinearOpMode {
+public class TeleopTag extends LinearOpMode {
     GoBildaPinpointDriver odo; // Declare OpMode member for the Odometry Computer
     DriveToPoint nav = new DriveToPoint(this); //OpMode member for the point-to-point navigation class
     private static final boolean USE_WEBCAM = true;
-    CRServo servoBucket;
+
 
     enum StateMachine {
         WAITING_FOR_TARGET,
@@ -56,7 +56,7 @@ public class Teleop_echelle extends LinearOpMode {
      * The variable to store our instance of the vision portal.
      */
     private VisionPortal visionPortal;
-    private DcMotor slideMotor;
+   
     private static final int POSITION_1 = -75; // Preset position 1 (encoder counts)
     private static final int POSITION_2 = -3200;
 
@@ -67,9 +67,7 @@ public class Teleop_echelle extends LinearOpMode {
         DcMotor frontLeftMotor = hardwareMap.dcMotor.get("fl");
         DcMotor backLeftMotor = hardwareMap.dcMotor.get("bl");
         DcMotor frontRightMotor = hardwareMap.dcMotor.get("fr");
-        DcMotor backRightMotor = hardwareMap.dcMotor.get("br");
-        slideMotor = hardwareMap.get(DcMotor.class, "ele");
-        servoBucket = hardwareMap.get(CRServo.class, "servoBucket");
+        DcMotor backRightMotor = hardwareMap.dcMotor.get("br")
 
 
 
@@ -81,11 +79,7 @@ public class Teleop_echelle extends LinearOpMode {
         telemetry.update();
         frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         backRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        slideMotor.setTargetPosition(0);
-        slideMotor.setPower(0.0);
-        slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
+      
         // Retrieve the IMU from the hardware map
         IMU imu = hardwareMap.get(IMU.class, "imu");
         // Adjust the orientation parameters to match your robot
@@ -104,7 +98,7 @@ public class Teleop_echelle extends LinearOpMode {
 
         StateMachine stateMachine;
         stateMachine = StateMachine.WAITING_FOR_TARGET;
-        slideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        
         telemetry.addData("Status", "Initialized");
         telemetry.addData("X offset", odo.getXOffset());
         telemetry.addData("Y offset", odo.getYOffset());
@@ -178,24 +172,6 @@ public class Teleop_echelle extends LinearOpMode {
             } else {
                 stateMachine = StateMachine.WAITING_FOR_TARGET;
             }
-            if (gamepad2.a) {
-                slideMotor.setTargetPosition(POSITION_1);
-                slideMotor.setPower(1.0); // Set motor power
-            } else if (gamepad2.b) {
-                slideMotor.setTargetPosition(POSITION_2);
-                slideMotor.setPower(1.0);
-            }
-            else{
-                slideMotor.setTargetPosition(POSITION_1);
-                slideMotor.setPower(0.0);
-            }
-            if (gamepad2.right_trigger > 0.5) servoBucket.setPower(-1);
-            else if (gamepad2.left_trigger > 0.5) servoBucket.setPower(1);
-            else servoBucket.setPower(0);
-
-
-
-
 
         }
         visionPortal.close();
