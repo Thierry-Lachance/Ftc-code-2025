@@ -67,7 +67,7 @@ public class TeleopTag extends LinearOpMode {
         DcMotor frontLeftMotor = hardwareMap.dcMotor.get("fl");
         DcMotor backLeftMotor = hardwareMap.dcMotor.get("bl");
         DcMotor frontRightMotor = hardwareMap.dcMotor.get("fr");
-        DcMotor backRightMotor = hardwareMap.dcMotor.get("br")
+        DcMotor backRightMotor = hardwareMap.dcMotor.get("br");
 
 
 
@@ -91,7 +91,7 @@ public class TeleopTag extends LinearOpMode {
         odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
         odo.setOffsets(10.0, -5.0); //these are tuned for 3110-0002-0001 Product Insight #1
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         odo.resetPosAndIMU();
         nav.setDriveType(DriveToPoint.DriveType.MECANUM);
