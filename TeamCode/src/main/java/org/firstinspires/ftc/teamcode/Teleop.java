@@ -39,17 +39,18 @@ public class Teleop extends LinearOpMode {
         DRIVE_TO_TARGET_Y
 
     }
-    static final Pose2D TARGET_A = new Pose2D(DistanceUnit.INCH, 40, 13, AngleUnit.DEGREES, -90);
-    static final Pose2D TARGET_B = new Pose2D(DistanceUnit.INCH, 15, -15, AngleUnit.DEGREES, 0);
-    static final Pose2D TARGET_X = new Pose2D(DistanceUnit.INCH, 15, 15, AngleUnit.DEGREES, 0);
-    static final Pose2D TARGET_Y = new Pose2D(DistanceUnit.INCH, 15, 0, AngleUnit.DEGREES, 0);
+    static final Pose2D TARGET_A = new Pose2D(DistanceUnit.INCH, 6.5, 36.5
+            , AngleUnit.DEGREES, -45);
+    static final Pose2D TARGET_B = new Pose2D(DistanceUnit.INCH, 0, 33, AngleUnit.DEGREES, -45);
+    static final Pose2D TARGET_X = new Pose2D(DistanceUnit.INCH, 10, 37, AngleUnit.DEGREES, -45);
+    static final Pose2D TARGET_Y = new Pose2D(DistanceUnit.INCH, 9.5, 34, AngleUnit.DEGREES, -45);
     private final Position cameraPosition = new Position(DistanceUnit.INCH,
             4.5, 8, 7, 0);
     private final YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
             0, -90, 0, 0);
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
-    private static final int POSITION_1 = -950; // Preset position 1 (encoder counts)
+    private static final int POSITION_1 = -850; // Preset position 1 (encoder counts)
     private static final int POSITION_2 = -3000;
     private ElapsedTime runtime = new ElapsedTime();
     double time = 0.0;
@@ -93,9 +94,9 @@ public class Teleop extends LinearOpMode {
         // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
         imu.initialize(parameters);
         odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
-        odo.setOffsets(10.0, -5.0); //these are tuned for 3110-0002-0001 Product Insight #1
+        odo.setOffsets(10.0, -5.5); //these are tuned for 3110-0002-0001 Product Insight #1
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         odo.resetPosAndIMU();
         nav.setDriveType(DriveToPoint.DriveType.MECANUM);
@@ -169,7 +170,7 @@ public class Teleop extends LinearOpMode {
                 nav.driveTo(odo.getPosition(), TARGET_Y, 0.5, 0);
             } else if (gamepad1.a) {
                 stateMachine = StateMachine.DRIVE_TO_TARGET_A;
-                nav.driveTo(odo.getPosition(), TARGET_A, 0.5, 0);
+                nav.driveTo(odo.getPosition(), TARGET_A, 0.3, 0);
             } else if (gamepad1.b) {
                 stateMachine = StateMachine.DRIVE_TO_TARGET_B;
                 nav.driveTo(odo.getPosition(), TARGET_B, 0.5, 0);
@@ -215,7 +216,7 @@ public class Teleop extends LinearOpMode {
                 servoPinceR.setPower(0);
                 servoPinceL.setPower(0);
             }
-            armMotor.setPower(gamepad2.left_stick_y/2);
+            armMotor.setPower(gamepad2.left_stick_y*0.75);
             if (time != 0.0) {
                 if (time + 1.5 <= runtime.time()) {
                     servoPinceR.setPower(0);

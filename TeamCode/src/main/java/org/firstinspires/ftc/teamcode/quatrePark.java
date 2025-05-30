@@ -1,11 +1,11 @@
 package org.firstinspires.ftc.teamcode;
 
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -14,15 +14,17 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 import java.util.Locale;
 
-@Autonomous(name = "ken block")
+@Autonomous(name = "4x3")
 //@Disabled
 
-public class FinalAuto extends LinearOpMode {
+public class quatrePark extends LinearOpMode {
 
     DcMotor leftFrontDrive;
     DcMotor rightFrontDrive;
     DcMotor leftBackDrive;
     DcMotor rightBackDrive;
+    DcMotor armMotor;
+    DcMotor slideMotor;
     CRServo servoBucket;
     CRServo servoPinceR;
     CRServo servoPinceL;
@@ -38,8 +40,8 @@ public class FinalAuto extends LinearOpMode {
     boolean readyToGo = true;
     boolean armOut = false;
     boolean clawOut = false;
-    private static final int POSITION_2 = -850; // Preset position 1 (encoder counts)
-    private static final int POSITION_1 = -3000;
+    private static final int POSITION_1 = -850; // Preset position 1 (encoder counts)
+    private static final int POSITION_2 = -3000;
 
     enum StateMachine {
         WAITING_FOR_START,
@@ -84,8 +86,8 @@ public class FinalAuto extends LinearOpMode {
         leftBackDrive = hardwareMap.dcMotor.get("bl");
         rightFrontDrive = hardwareMap.dcMotor.get("fr");
         rightBackDrive = hardwareMap.dcMotor.get("br");
-        DcMotor armMotor = hardwareMap.dcMotor.get("arm");
-        DcMotor slideMotor = hardwareMap.get(DcMotor.class, "ele");
+        armMotor = hardwareMap.dcMotor.get("arm");
+        slideMotor = hardwareMap.get(DcMotor.class, "ele");
         servoBucket = hardwareMap.get(CRServo.class, "servoBucket");
         servoPinceR = hardwareMap.get(CRServo.class, "servoPinceR");
         servoPinceL = hardwareMap.get(CRServo.class, "servoPinceL");
@@ -133,255 +135,145 @@ public class FinalAuto extends LinearOpMode {
             odo.update();
 
             switch (stateMachine) {
-                case WAITING_FOR_START:
-                    //the first step in the autonomous
+                case WAITING_FOR_START://up the slider
+
                     stateMachine = StateMachine.DRIVE_TO_TARGET_1;
+                    upElevator();
+
                     break;
                 case DRIVE_TO_TARGET_1:
-                    if (nav.driveTo(odo.getPosition(), TARGET_1, 0.7, 0)) {
+                    if (nav.driveTo(odo.getPosition(), TARGET_1, 0.5, 0.0)) {
                         telemetry.addLine("at position #1!");
                         stateMachine = StateMachine.DRIVE_TO_TARGET_2;
-                        slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                        slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                        slideMotor.setTargetPosition(POSITION_1);
-                        slideMotor.setPower(1.0);
-
                     }
 
 
                     break;
                 case DRIVE_TO_TARGET_2:
-                    //drive to the second target
-                    if (nav.driveTo(odo.getPosition(), TARGET_2, 0.7, 0.5)) {
+                    if (nav.driveTo(odo.getPosition(), TARGET_2, 0.5, 0.0)) {//dump in the basket and open arm
                         telemetry.addLine("at position #2!");
-
-                        servoBucket.setPower(1.0);
-                        bucketOut = true;
-                        timeBucket = runtime.time();
-                        stateMachine = StateMachine.AT_TARGET;
-                        readyToGo = false;
-                        newTarget = 3;
-                        armMotor.setPower(0.5);
-                        armOut = true;
-                        timeArm = runtime.time();
+                        openArm();
+                        while (notReadyToDump()) {
+                            telemetry.addLine("waiting for elevator to be ready to dump");
+                            telemetry.update();
+                        }
+                        flipBucket(); // dump the block in the basket
+                        downElevator();
+                        stateMachine = StateMachine.DRIVE_TO_TARGET_3;
 
                     }
 
                     break;
                 case DRIVE_TO_TARGET_3:
-                    if (nav.driveTo(odo.getPosition(), TARGET_3, 0.5, 0.0)) {
+                    if (nav.driveTo(odo.getPosition(), TARGET_3, 0.5, 0.0)) {//stop the arm
                         telemetry.addLine("at position #3");
-                        stateMachine = StateMachine.AT_TARGET;
-                        //armMotor.setPower(1.0);
-                       // armOut = true;
-                       // timeArm = runtime.time();
-                        readyToGo = true;
-                        newTarget = 31;
-                       // sleep(200);
-
+                        stopArm();
+                        stateMachine = StateMachine.Drive_TO_TARGET_3_1;
                     }
 
                     break;
                 case Drive_TO_TARGET_3_1:
-                    if (nav.driveTo(odo.getPosition(), TARGET_3_1, 0.5, 0.0)) {
+                    if (nav.driveTo(odo.getPosition(), TARGET_3_1, 0.5, 0.0)) { //Close the claw at block position
                         telemetry.addLine("at position #3.1");
-                        stateMachine = StateMachine.AT_TARGET;
-                        readyToGo = false;
-                        newTarget = 4;
-
+                        closeClaw();
+                        while (notReadyToPick()) {
+                            telemetry.addLine("waiting for elevator to be ready to pick");
+                            telemetry.update();
+                        }
+                        closeArm();
+                        openClaw();
+                        upElevator();
+                        stateMachine = StateMachine.DRIVE_TO_TARGET_4;
                     }
 
                     break;
                 case DRIVE_TO_TARGET_4:
-                    if (nav.driveTo(odo.getPosition(), TARGET_4, 0.50, 0.5)) {
+                    if (nav.driveTo(odo.getPosition(), TARGET_4, 0.5, 0.0)) {//dump the block in the basket
                         telemetry.addLine("at position #4");
-                        servoBucket.setPower(1.0);
-                        bucketOut = true;
-                        timeBucket = runtime.time();
-                        stateMachine = StateMachine.AT_TARGET;
-                        readyToGo = false;
-                        newTarget = 5;
-
+                        openArm();
+                        while (notReadyToDump()) {
+                            telemetry.addLine("waiting for elevator to be ready to dump");
+                            telemetry.update();
+                        }
+                        flipBucket(); // dump the block in the basket
+                        downElevator();
+                        stateMachine = StateMachine.DRIVE_TO_TARGET_5;
                     }
 
                     break;
                 case DRIVE_TO_TARGET_5:
-                    if (nav.driveTo(odo.getPosition(), TARGET_5, 0.4, 0.)) {
+                    if (nav.driveTo(odo.getPosition(), TARGET_5, 0.5, 0.0)) {//stop the arm
                         telemetry.addLine("at position #5");
-                        stateMachine = StateMachine.AT_TARGET;
-                        armMotor.setPower(1.0);
-                        armOut = true;
-                        timeArm = runtime.time();
-                        readyToGo = true;
-                        newTarget = 51;
-                      //  sleep(200);
-
-
+                        stopArm();
+                        stateMachine = StateMachine.DRIVE_TO_TARGET_5_1;
                     }
                 case DRIVE_TO_TARGET_5_1:
-                    if (nav.driveTo(odo.getPosition(), TARGET_5_1, 0.4, 0.5)) {
+                    if (nav.driveTo(odo.getPosition(), TARGET_5_1, 0.5, 0.0)) {//close the claw at block position
                         telemetry.addLine("at position #5.1");
-                        stateMachine = StateMachine.AT_TARGET;
-                        readyToGo = false;
-                        newTarget = 6;
-
+                        closeClaw();
+                        while (notReadyToPick()) {
+                            telemetry.addLine("waiting for elevator to be ready to pick");
+                            telemetry.update();
+                        }
+                        closeArm();
+                        openClaw();
+                        upElevator();
+                        stateMachine = StateMachine.DRIVE_TO_TARGET_6;
                     }
 
                     break;
                 case DRIVE_TO_TARGET_6:
-                    if (nav.driveTo(odo.getPosition(), TARGET_6, 0.5, 0.5)) {
+                    if (nav.driveTo(odo.getPosition(), TARGET_6, 0.5, 0.0)) {// dump the block in the basket
                         telemetry.addLine("at position #6");
-                        stateMachine = StateMachine.AT_TARGET;
-                        servoBucket.setPower(1.0);
-                        bucketOut = true;
-                        timeBucket = runtime.time();
-                        readyToGo = false;
-                        newTarget = 7;
-
+                        openArm();
+                        while (notReadyToDump()) {
+                            telemetry.addLine("waiting for elevator to be ready to dump");
+                            telemetry.update();
+                        }
+                        flipBucket(); // dump the block in the basket
+                        downElevator();
+                        stateMachine = StateMachine.DRIVE_TO_TARGET_7;
                     }
 
                     break;
                 case DRIVE_TO_TARGET_7:
-                    if (nav.driveTo(odo.getPosition(), TARGET_7, 0.6, 0.0)) {
+                    if (nav.driveTo(odo.getPosition(), TARGET_7, 0.5, 0.0)) {// stop the arm
                         telemetry.addLine("at position #7");
-                        stateMachine = StateMachine.AT_TARGET;
-                        armMotor.setPower(1.0);
-                        armOut = true;
-                        timeArm = runtime.time();
-                        readyToGo = true;
-                        newTarget = 71;
-                       // sleep(200);
-
+                        stopArm();
+                        stateMachine = StateMachine.Drive_TO_TARGET_7_1;
                     }
 
                     break;
                 case Drive_TO_TARGET_7_1:
-                    if (nav.driveTo(odo.getPosition(), TARGET_7_1, 0.5, 0.0)) {
+                    if (nav.driveTo(odo.getPosition(), TARGET_7_1, 0.5, 0.0)) {// close the claw at block position
                         telemetry.addLine("at position #7.1");
-                        stateMachine = StateMachine.AT_TARGET;
-                        readyToGo = false;
-                        newTarget = 8;
-
+                        closeClaw();
+                        while (notReadyToPick()) {
+                            telemetry.addLine("waiting for elevator to be ready to pick");
+                            telemetry.update();
+                        }
+                        closeArm();
+                        openClaw();
+                        upElevator();
+                        stateMachine = StateMachine.DRIVE_TO_TARGET_8;
                     }
-
                     break;
                 case DRIVE_TO_TARGET_8:
-                    if (nav.driveTo(odo.getPosition(), TARGET_8, 0.5, 0.5)) {
+                    if (nav.driveTo(odo.getPosition(), TARGET_8, 0.5, 0.0)) {// dump the block in the basket
                         telemetry.addLine("at position #8");
+                        while (notReadyToDump()) {
+                            telemetry.addLine("waiting for elevator to be ready to dump");
+                            telemetry.update();
+                        }
+                        flipBucket(); // dump the block in the basket
+                        downElevator();
                         stateMachine = StateMachine.AT_TARGET;
-                        servoBucket.setPower(1.0);
-                        bucketOut = true;
-                        timeBucket = runtime.time();
-
-                        readyToGo = false;
-                        newTarget = 0;
 
                     }
 
                     break;
             }
 
-            if (timeBucket != 0.0) {
-                if (timeBucket + 1.3 <= runtime.time()) {
-                    servoBucket.setPower(0);
-                    timeBucket = 0.0;
-                    if (bucketOut) {
-                        readyToGo = true;
-                        bucketOut = false;
-                        timeBucket = runtime.time();
-                        servoBucket.setPower(-1.0);
-                        slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                        slideMotor.setTargetPosition(POSITION_2);
-                        slideMotor.setPower(1.0);
-                    }
-                }
-            }
-            if (timeArm != 0.0) {
-                if (timeArm + 1.6 <= runtime.time()) {
-                    armMotor.setPower(0);
-                    timeArm = 0.0;
-                    if (armOut && !clawOut) {
-
-                        timeClaw = runtime.time();
-                        clawOut = true;
-                        sleep(5);
-                        servoPinceR.setPower(-1);
-                        sleep(5);
-                        servoPinceL.setPower(1);
-                        sleep(5);
-
-                    }
-                    if (!armOut && clawOut) {
-                        timeClaw = runtime.time();
-                        clawOut = false;
-                        sleep(500);
-                        servoPinceL.setPower(-1);
-                        sleep(5);
-                        servoPinceR.setPower(1);
-                        sleep(1000);
-                        readyToGo = true;
-                        slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                        slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                        slideMotor.setTargetPosition(POSITION_1);
-                        slideMotor.setPower(1.0);
-                    }
-
-                }
-            }
-            if (timeClaw != 0.0) {
-                if (timeClaw + 1.0 <= runtime.time()) {
-                    servoPinceR.setPower(0);
-                    servoPinceL.setPower(0);
-                    timeClaw = 0.0;
-
-
-                    if (clawOut && armOut) {
-                        armOut = false;
-                        timeArm = runtime.time();
-                        armMotor.setPower(-0.7);
-                    }
-                }
-            }
-            if (stateMachine == StateMachine.AT_TARGET && readyToGo) {
-                switch (newTarget) {
-                    case 3:
-                        stateMachine = StateMachine.DRIVE_TO_TARGET_3;
-
-
-                        break;
-                    case 4:
-                        stateMachine = StateMachine.DRIVE_TO_TARGET_4;
-
-                        break;
-                    case 5:
-                        stateMachine = StateMachine.DRIVE_TO_TARGET_5;
-
-                        break;
-                    case 6:
-                        stateMachine = StateMachine.DRIVE_TO_TARGET_6;
-
-                        break;
-                    case 7:
-                        stateMachine = StateMachine.DRIVE_TO_TARGET_7;
-
-                        break;
-                    case 8:
-                        stateMachine = StateMachine.DRIVE_TO_TARGET_8;
-
-                        break;
-                    case 31:
-                        stateMachine = StateMachine.Drive_TO_TARGET_3_1;
-
-                        break;
-                    case 51:
-                        stateMachine = StateMachine.DRIVE_TO_TARGET_5_1;
-
-                        break;
-                    case 71:
-                        stateMachine = StateMachine.Drive_TO_TARGET_7_1;
-
-                        break;
-                }
 
             }
 
@@ -408,5 +300,56 @@ public class FinalAuto extends LinearOpMode {
             telemetry.update();
 
         }
+
+    public void upElevator() {
+        slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        slideMotor.setTargetPosition(POSITION_2);
+        slideMotor.setPower(1.0);
     }
+    public void downElevator() {
+        slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        slideMotor.setTargetPosition(POSITION_1);
+        slideMotor.setPower(1.0);
+    }
+    public void flipBucket(){
+      servoBucket.setPower(1);
+        sleep(2000);
+        servoBucket.setPower(-1);
+        sleep(2000);
+        servoBucket.setPower(0);
+    }
+    public void openClaw(){
+        servoPinceL.setPower(-1);
+        sleep(5);
+        servoPinceR.setPower(1);
+        sleep(2000);
+        servoPinceL.setPower(0);
+        servoPinceR.setPower(0);
+    }
+    public void closeClaw(){
+        servoPinceL.setPower(1);
+        sleep(5);
+        servoPinceR.setPower(-1);
+        sleep(2000);
+        servoPinceL.setPower(0);
+        servoPinceR.setPower(0);
+    }
+    public boolean notReadyToDump(){
+        return slideMotor.getCurrentPosition() < POSITION_2 - 25 || slideMotor.getCurrentPosition() > POSITION_2 + 25;
+    }
+    public boolean notReadyToPick() {
+        return slideMotor.getCurrentPosition() < POSITION_1 - 25 || slideMotor.getCurrentPosition() > POSITION_1 + 25;
+    }
+    public void openArm() {
+        armMotor.setPower(0.5);
+    }
+    public void closeArm() {
+        armMotor.setPower(-0.5);
+        sleep(1000);
+        armMotor.setPower(0);
+    }
+    public void stopArm() {
+        armMotor.setPower(0);
+    }
+
 }
