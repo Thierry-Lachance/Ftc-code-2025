@@ -13,10 +13,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 import java.util.Locale;
 
-@Autonomous(name = "4x3")
+@Autonomous(name = "Ken BLock", group = "Autonomous")
 //@Disabled
 
-public class QuatrePark extends LinearOpMode {
+public class KenBlock extends LinearOpMode {
 
     DcMotor leftFrontDrive;
     DcMotor rightFrontDrive;
@@ -28,10 +28,10 @@ public class QuatrePark extends LinearOpMode {
     CRServo servoPinceR;
     CRServo servoPinceL;
 
-    GoBildaPinpointDriver odo; // Declare OpMode member for the Odometry Computer
-    DriveToPoint nav = new DriveToPoint(this); //OpMode member for the point-to-point navigation class
+    GoBildaPinpointDriver odo;
+    DriveToPoint nav = new DriveToPoint(this);
 
-    private static final int POSITION_1 = -850; // Preset position 1 (encoder counts)
+    private static final int POSITION_1 = -850;
     private static final int POSITION_2 = -3000;
 
     enum StateMachine {
@@ -257,7 +257,7 @@ public class QuatrePark extends LinearOpMode {
                         telemetry.addLine("at position #10");
 
                         stopWheel();
-                        openArmPowerfull();
+                        openArmPowerful();
                         sleep(1000);
                         stateMachine = StateMachine.AT_TARGET;
                     }
@@ -327,18 +327,10 @@ public class QuatrePark extends LinearOpMode {
         servoPinceR.setPower(0);
     }
 
-    public boolean notReadyToDump() {
-        return slideMotor.getCurrentPosition() < POSITION_2 - 50 || slideMotor.getCurrentPosition() > POSITION_2 + 50;
-    }
-
-    public boolean notReadyToPick() {
-        return slideMotor.getCurrentPosition() < POSITION_1 - 50 || slideMotor.getCurrentPosition() > POSITION_1 + 50;
-    }
-
     public void openArm() {
         armMotor.setPower(0.25);
     }
-public void openArmPowerfull() {
+public void openArmPowerful() {
         armMotor.setPower(0.8);
         sleep(500);
         armMotor.setPower(0);
@@ -363,11 +355,6 @@ public void openArmPowerfull() {
         servoPinceL.setPower(1);
         sleep(5);
         servoPinceR.setPower(-1);
-    }
-    public void stopClaw() {
-        servoPinceL.setPower(0);
-        sleep(5);
-        servoPinceR.setPower(0);
     }
 
 

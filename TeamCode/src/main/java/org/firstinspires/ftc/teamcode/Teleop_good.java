@@ -216,7 +216,4 @@ public class Teleop_good extends LinearOpMode {
             armMotor.setPower(0.25);
         }
     }
-
-
-
 }   // end class
