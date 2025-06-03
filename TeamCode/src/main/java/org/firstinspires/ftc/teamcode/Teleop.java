@@ -39,8 +39,7 @@ public class Teleop extends LinearOpMode {
         DRIVE_TO_TARGET_Y
 
     }
-    static final Pose2D TARGET_A = new Pose2D(DistanceUnit.INCH, 6.5, 36.5
-            , AngleUnit.DEGREES, -45);
+    static final Pose2D TARGET_A = new Pose2D(DistanceUnit.INCH, 3.6, 35.0, AngleUnit.DEGREES, -45);
     static final Pose2D TARGET_B = new Pose2D(DistanceUnit.INCH, 0, 33, AngleUnit.DEGREES, -45);
     static final Pose2D TARGET_X = new Pose2D(DistanceUnit.INCH, 10, 37, AngleUnit.DEGREES, -45);
     static final Pose2D TARGET_Y = new Pose2D(DistanceUnit.INCH, 9.5, 34, AngleUnit.DEGREES, -45);
@@ -63,7 +62,7 @@ public class Teleop extends LinearOpMode {
         DcMotor backLeftMotor = hardwareMap.dcMotor.get("bl");
         DcMotor frontRightMotor = hardwareMap.dcMotor.get("fr");
         DcMotor backRightMotor = hardwareMap.dcMotor.get("br");
-        DcMotor armMotor = hardwareMap.dcMotor.get("arm");
+         DcMotor armMotor = hardwareMap.dcMotor.get("arm");
         DcMotor slideMotor = hardwareMap.get(DcMotor.class, "ele");
         servoBucket = hardwareMap.get(CRServo.class, "servoBucket");
         servoPinceR = hardwareMap.get(CRServo.class, "servoPinceR");
@@ -94,7 +93,7 @@ public class Teleop extends LinearOpMode {
         // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
         imu.initialize(parameters);
         odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
-        odo.setOffsets(10.0, -5.5); //these are tuned for 3110-0002-0001 Product Insight #1
+        odo.setOffsets(80.0, -55); //these are tuned for 3110-0002-0001 Product Insight #1
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 

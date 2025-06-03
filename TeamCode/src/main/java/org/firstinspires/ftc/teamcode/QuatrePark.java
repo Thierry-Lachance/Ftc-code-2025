@@ -6,7 +6,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -17,7 +16,7 @@ import java.util.Locale;
 @Autonomous(name = "4x3")
 //@Disabled
 
-public class quatrePark extends LinearOpMode {
+public class QuatrePark extends LinearOpMode {
 
     DcMotor leftFrontDrive;
     DcMotor rightFrontDrive;
@@ -29,17 +28,9 @@ public class quatrePark extends LinearOpMode {
     CRServo servoPinceR;
     CRServo servoPinceL;
 
-    private final ElapsedTime runtime = new ElapsedTime();
-    double timeBucket = 0.0;
-    double timeArm = 0.0;
-    double timeClaw = 0.0;
     GoBildaPinpointDriver odo; // Declare OpMode member for the Odometry Computer
     DriveToPoint nav = new DriveToPoint(this); //OpMode member for the point-to-point navigation class
-    boolean bucketOut = false;
-    int newTarget = 0;
-    boolean readyToGo = true;
-    boolean armOut = false;
-    boolean clawOut = false;
+
     private static final int POSITION_1 = -850; // Preset position 1 (encoder counts)
     private static final int POSITION_2 = -3000;
 
@@ -60,28 +51,20 @@ public class quatrePark extends LinearOpMode {
     }
 
     static final Pose2D TARGET_1 = new Pose2D(DistanceUnit.MM, 200, 0, AngleUnit.DEGREES, -20);
-    static final Pose2D TARGET_2 =  new Pose2D(DistanceUnit.INCH, 6.5, 36.5
-            , AngleUnit.DEGREES, -45);
+    static final Pose2D TARGET_2 = new Pose2D(DistanceUnit.INCH, 3.6, 35.0, AngleUnit.DEGREES, -45);
     static final Pose2D TARGET_3 = new Pose2D(DistanceUnit.MM, 220, 620, AngleUnit.DEGREES, 0);
-    static final Pose2D TARGET_4 =  new Pose2D(DistanceUnit.INCH, 6.5, 36.5
-            , AngleUnit.DEGREES, -45);
+    static final Pose2D TARGET_4 = new Pose2D(DistanceUnit.INCH, 3.6, 35.0, AngleUnit.DEGREES, -45);
     static final Pose2D TARGET_5 = new Pose2D(DistanceUnit.MM, 220, 880, AngleUnit.DEGREES, 0);
-    static final Pose2D TARGET_6 =  new Pose2D(DistanceUnit.INCH, 6.5, 36.5
-            , AngleUnit.DEGREES, -45);
+    static final Pose2D TARGET_6 = new Pose2D(DistanceUnit.INCH, 3.6, 35.0, AngleUnit.DEGREES, -45);
     static final Pose2D TARGET_7 = new Pose2D(DistanceUnit.MM, 890, 340, AngleUnit.DEGREES, 90);
-    static final Pose2D TARGET_8 =  new Pose2D(DistanceUnit.INCH, 6.5, 36.5
-            , AngleUnit.DEGREES, -45);
+    static final Pose2D TARGET_8 = new Pose2D(DistanceUnit.INCH, 3.6, 35.0, AngleUnit.DEGREES, -45);
     static final Pose2D TARGET_3_1 = new Pose2D(DistanceUnit.MM, 380, 620, AngleUnit.DEGREES, 0);
     static final Pose2D TARGET_5_1 = new Pose2D(DistanceUnit.MM, 380, 880, AngleUnit.DEGREES, 0);
-    static final Pose2D TARGET_7_1 = new Pose2D(DistanceUnit.MM, 890, 550, AngleUnit.DEGREES, 90);
+    static final Pose2D TARGET_7_1 = new Pose2D(DistanceUnit.MM, 890, 400, AngleUnit.DEGREES, 90);
 
 
     @Override
     public void runOpMode() {
-
-        // Initialize the hardware variables. Note that the strings used here must correspond
-        // to the names assigned during the robot configuration step on the DS or RC devices.
-        double elevatorPower = 0.0;
         leftFrontDrive = hardwareMap.dcMotor.get("fl");
         leftBackDrive = hardwareMap.dcMotor.get("bl");
         rightFrontDrive = hardwareMap.dcMotor.get("fr");
@@ -106,14 +89,11 @@ public class quatrePark extends LinearOpMode {
         rightBackDrive.setDirection(DcMotorSimple.Direction.REVERSE);
 
         odo = hardwareMap.get(GoBildaPinpointDriver.class, "odo");
-        odo.setOffsets(0.0, 0.0); //these are tuned for 3110-0002-0001 Product Insight #1
+        odo.setOffsets(80.0, -55); //these are tuned for 3110-0002-0001 Product Insight #1
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         odo.resetPosAndIMU();
-
-        //nav.setXYCoefficients(0.02,0.002,0.0,DistanceUnit.MM,12);
-        //nav.setYawCoefficients(1,0,0.0, AngleUnit.DEGREES,2);
         nav.setDriveType(DriveToPoint.DriveType.MECANUM);
 
         StateMachine stateMachine;
@@ -136,15 +116,14 @@ public class quatrePark extends LinearOpMode {
 
             switch (stateMachine) {
                 case WAITING_FOR_START://up the slider
-
                     stateMachine = StateMachine.DRIVE_TO_TARGET_1;
                     upElevator();
-
                     break;
                 case DRIVE_TO_TARGET_1:
                     if (nav.driveTo(odo.getPosition(), TARGET_1, 0.5, 0.0)) {
                         telemetry.addLine("at position #1!");
                         stateMachine = StateMachine.DRIVE_TO_TARGET_2;
+
                     }
 
 
@@ -159,6 +138,7 @@ public class quatrePark extends LinearOpMode {
                         }
                         flipBucket(); // dump the block in the basket
                         downElevator();
+                        stopArm();
                         stateMachine = StateMachine.DRIVE_TO_TARGET_3;
 
                     }
@@ -167,7 +147,6 @@ public class quatrePark extends LinearOpMode {
                 case DRIVE_TO_TARGET_3:
                     if (nav.driveTo(odo.getPosition(), TARGET_3, 0.5, 0.0)) {//stop the arm
                         telemetry.addLine("at position #3");
-                        stopArm();
                         stateMachine = StateMachine.Drive_TO_TARGET_3_1;
                     }
 
@@ -197,6 +176,7 @@ public class quatrePark extends LinearOpMode {
                         }
                         flipBucket(); // dump the block in the basket
                         downElevator();
+                        stopArm();
                         stateMachine = StateMachine.DRIVE_TO_TARGET_5;
                     }
 
@@ -204,7 +184,7 @@ public class quatrePark extends LinearOpMode {
                 case DRIVE_TO_TARGET_5:
                     if (nav.driveTo(odo.getPosition(), TARGET_5, 0.5, 0.0)) {//stop the arm
                         telemetry.addLine("at position #5");
-                        stopArm();
+
                         stateMachine = StateMachine.DRIVE_TO_TARGET_5_1;
                     }
                 case DRIVE_TO_TARGET_5_1:
@@ -232,6 +212,7 @@ public class quatrePark extends LinearOpMode {
                         }
                         flipBucket(); // dump the block in the basket
                         downElevator();
+                        stopArm();
                         stateMachine = StateMachine.DRIVE_TO_TARGET_7;
                     }
 
@@ -239,7 +220,7 @@ public class quatrePark extends LinearOpMode {
                 case DRIVE_TO_TARGET_7:
                     if (nav.driveTo(odo.getPosition(), TARGET_7, 0.5, 0.0)) {// stop the arm
                         telemetry.addLine("at position #7");
-                        stopArm();
+
                         stateMachine = StateMachine.Drive_TO_TARGET_7_1;
                     }
 
@@ -274,51 +255,50 @@ public class quatrePark extends LinearOpMode {
                     break;
             }
 
-
-            }
-
-
-            if (readyToGo) {
-                leftFrontDrive.setPower(nav.getMotorPower(DriveToPoint.DriveMotor.LEFT_FRONT));
-                rightFrontDrive.setPower(nav.getMotorPower(DriveToPoint.DriveMotor.RIGHT_FRONT));
-                leftBackDrive.setPower(nav.getMotorPower(DriveToPoint.DriveMotor.LEFT_BACK));
-                rightBackDrive.setPower(nav.getMotorPower(DriveToPoint.DriveMotor.RIGHT_BACK));
-            } else {
-                leftFrontDrive.setPower(0);
-                rightFrontDrive.setPower(0);
-                leftBackDrive.setPower(0);
-                rightBackDrive.setPower(0);
-            }
-
-
-            telemetry.addData("current state:", stateMachine);
-
-            Pose2D pos = odo.getPosition();
-            String data = String.format(Locale.US, "{X: %.3f, Y: %.3f, H: %.3f}", pos.getX(DistanceUnit.MM), pos.getY(DistanceUnit.MM), pos.getHeading(AngleUnit.DEGREES));
-            telemetry.addData("Position", data);
-
-            telemetry.update();
+            leftFrontDrive.setPower(nav.getMotorPower(DriveToPoint.DriveMotor.LEFT_FRONT));
+            rightFrontDrive.setPower(nav.getMotorPower(DriveToPoint.DriveMotor.RIGHT_FRONT));
+            leftBackDrive.setPower(nav.getMotorPower(DriveToPoint.DriveMotor.LEFT_BACK));
+            rightBackDrive.setPower(nav.getMotorPower(DriveToPoint.DriveMotor.RIGHT_BACK));
 
         }
+
+
+
+
+
+
+        telemetry.addData("current state:", stateMachine);
+
+        Pose2D pos = odo.getPosition();
+        String data = String.format(Locale.US, "{X: %.3f, Y: %.3f, H: %.3f}", pos.getX(DistanceUnit.MM), pos.getY(DistanceUnit.MM), pos.getHeading(AngleUnit.DEGREES));
+        telemetry.addData("Position", data);
+
+        telemetry.update();
+
+    }
 
     public void upElevator() {
         slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slideMotor.setTargetPosition(POSITION_2);
         slideMotor.setPower(1.0);
+
     }
+
     public void downElevator() {
         slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slideMotor.setTargetPosition(POSITION_1);
         slideMotor.setPower(1.0);
     }
-    public void flipBucket(){
-      servoBucket.setPower(1);
+
+    public void flipBucket() {
+        servoBucket.setPower(1);
         sleep(2000);
         servoBucket.setPower(-1);
         sleep(2000);
         servoBucket.setPower(0);
     }
-    public void openClaw(){
+
+    public void openClaw() {
         servoPinceL.setPower(-1);
         sleep(5);
         servoPinceR.setPower(1);
@@ -326,7 +306,8 @@ public class quatrePark extends LinearOpMode {
         servoPinceL.setPower(0);
         servoPinceR.setPower(0);
     }
-    public void closeClaw(){
+
+    public void closeClaw() {
         servoPinceL.setPower(1);
         sleep(5);
         servoPinceR.setPower(-1);
@@ -334,20 +315,25 @@ public class quatrePark extends LinearOpMode {
         servoPinceL.setPower(0);
         servoPinceR.setPower(0);
     }
-    public boolean notReadyToDump(){
+
+    public boolean notReadyToDump() {
         return slideMotor.getCurrentPosition() < POSITION_2 - 25 || slideMotor.getCurrentPosition() > POSITION_2 + 25;
     }
+
     public boolean notReadyToPick() {
         return slideMotor.getCurrentPosition() < POSITION_1 - 25 || slideMotor.getCurrentPosition() > POSITION_1 + 25;
     }
+
     public void openArm() {
-        armMotor.setPower(0.5);
+        armMotor.setPower(0.25);
     }
+
     public void closeArm() {
         armMotor.setPower(-0.5);
         sleep(1000);
         armMotor.setPower(0);
     }
+
     public void stopArm() {
         armMotor.setPower(0);
     }
