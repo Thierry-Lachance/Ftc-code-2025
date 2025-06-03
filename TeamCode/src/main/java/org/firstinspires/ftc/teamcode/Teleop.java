@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -22,7 +23,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 
 import java.util.List;
-
+@Disabled
 @TeleOp
 public class Teleop extends LinearOpMode {
     GoBildaPinpointDriver odo; // Declare OpMode member for the Odometry Computer
