@@ -31,8 +31,8 @@ public class KenBlock extends LinearOpMode {
     GoBildaPinpointDriver odo;
     DriveToPoint nav = new DriveToPoint(this);
 
-    private static final int POSITION_1 = -850;
-    private static final int POSITION_2 = -3000;
+    private static final int POSITION_1 = -375; // Preset position 1 (encoder counts) 800
+    private static final int POSITION_2 = -3200;// 3000
 
     enum StateMachine {
         WAITING_FOR_START,
@@ -310,12 +310,14 @@ public class KenBlock extends LinearOpMode {
     }
 
     public void openClaw() {
+        armMotor.setPower(-1);
         servoPinceL.setPower(-1);
         sleep(5);
         servoPinceR.setPower(1);
         sleep(1000);
         servoPinceL.setPower(0);
         servoPinceR.setPower(0);
+        armMotor.setPower(0);
     }
 
     public void closeClaw() {

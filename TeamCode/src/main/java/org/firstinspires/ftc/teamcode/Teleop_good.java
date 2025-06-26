@@ -26,6 +26,7 @@ public class Teleop_good extends LinearOpMode {
     DcMotor backRightMotor;
     DcMotor armMotor;
     DcMotor slideMotor;
+    DcMotor intakeMotor;
 
     enum StateMachine {
         WAITING_FOR_TARGET,
@@ -35,8 +36,8 @@ public class Teleop_good extends LinearOpMode {
     static final Pose2D TARGET_A = new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 0);
 
 
-    private static final int POSITION_1 = -800; // Preset position 1 (encoder counts)
-    private static final int POSITION_2 = -3000;
+    private static final int POSITION_1 = -375; // Preset position 1 (encoder counts) 800
+    private static final int POSITION_2 = -3200;// 3000
 
 
     @Override
@@ -47,6 +48,7 @@ public class Teleop_good extends LinearOpMode {
         frontRightMotor = hardwareMap.dcMotor.get("fr");
         backRightMotor = hardwareMap.dcMotor.get("br");
         armMotor = hardwareMap.dcMotor.get("arm");
+        intakeMotor = hardwareMap.dcMotor.get("intake");
         slideMotor = hardwareMap.get(DcMotor.class, "ele");
         servoBucket = hardwareMap.get(CRServo.class, "servoBucket");
         servoPinceR = hardwareMap.get(CRServo.class, "servoPinceR");
@@ -96,7 +98,9 @@ public class Teleop_good extends LinearOpMode {
         waitForStart();
         resetRuntime();
 
-
+        slideMotor.setTargetPosition(POSITION_1);
+        slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        slideMotor.setPower(0.5);
         if (isStopRequested()) return;
 
         while (opModeIsActive()) {
@@ -173,6 +177,7 @@ public class Teleop_good extends LinearOpMode {
             servoPinceR.setPower(0);
             servoPinceL.setPower(0);
         }
+        intakeMotor.setPower(gamepad2.right_trigger-gamepad2.left_trigger);
     }
     public void checkBucket() {
         if (gamepad2.right_bumper) {
@@ -210,10 +215,13 @@ public class Teleop_good extends LinearOpMode {
     }
     public void checkArm(){
         if(slideMotor.getTargetPosition() == POSITION_1) {
-            armMotor.setPower(gamepad2.left_stick_y * 0.75);
+            armMotor.setPower(gamepad2.left_stick_y);
+        }
+        else if(gamepad1.left_stick_x == 0.0 && gamepad1.left_stick_y == 0.0 && gamepad1.right_stick_x == 0.0) {
+            armMotor.setPower(0.25);
         }
         else{
-            armMotor.setPower(0.25);
+            armMotor.setPower(0);
         }
     }
 }   // end class
